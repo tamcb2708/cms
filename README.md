@@ -34,6 +34,10 @@ cp .env.example .env
 php artisan key:generate
 
 # 5. Cài đặt CSDL (Tạo bảng db_tracker_connections)
+# Dự án đã đính kèm sẵn file database.sql. Bạn có thể import trực tiếp vào database của mình để có sẵn dữ liệu:
+# psql -U your_username -d your_cms_database < database.sql
+#
+# Hoặc nếu bạn muốn tạo mới bảng hoàn toàn từ đầu:
 php artisan migrate
 ```
 
