@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Filament handles the root route (/) and Tenant CRUD (/tenants); this custom
-// MVC dashboard is a separate page that admins land on after login.
+// Filament handles the root route (/); Tenant CRUD lives at /tenants via
+// Inertia/Svelte (see TenantController below).
 
 // Define a named login route so the auth middleware knows where to redirect
 Route::get('/system/login', function () {
@@ -31,6 +31,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'index'])->name('admin-directory.index');
     Route::get('/admin-directory/create', [\App\Http\Controllers\AdminDirectoryController::class, 'create'])->name('admin-directory.create');
     Route::post('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'store'])->name('admin-directory.store');
+    Route::get('/admin-directory/{user}/edit', [\App\Http\Controllers\AdminDirectoryController::class, 'edit'])->name('admin-directory.edit');
+    Route::put('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'update'])->name('admin-directory.update');
+    Route::delete('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'destroy'])->name('admin-directory.destroy');
+    // Tenants (Workspace Subscription)
+    Route::get('/tenants', [\App\Http\Controllers\TenantController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/create', [\App\Http\Controllers\TenantController::class, 'create'])->name('tenants.create');
+    Route::post('/tenants', [\App\Http\Controllers\TenantController::class, 'store'])->name('tenants.store');
+    Route::get('/tenants/{tenant}/edit', [\App\Http\Controllers\TenantController::class, 'edit'])->name('tenants.edit');
+    Route::put('/tenants/{tenant}', [\App\Http\Controllers\TenantController::class, 'update'])->name('tenants.update');
+    Route::delete('/tenants/{tenant}', [\App\Http\Controllers\TenantController::class, 'destroy'])->name('tenants.destroy');
+
     // Software routes (placeholder until feature is built)
     Route::get('/software', fn () => Inertia::render('Placeholder', ['title' => 'Software']))->name('software.index');
     Route::get('/software/create', fn () => Inertia::render('Placeholder', ['title' => 'Add Software']))->name('software.create');

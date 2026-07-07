@@ -100,6 +100,15 @@
                             </div>
                         {/if}
                     </div>
+                {:else if item.external}
+                    <a href={item.href} class={navClass(item.active, collapsed)} title={item.label}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px] flex-none">
+                            {@html icons[item.icon]}
+                        </svg>
+                        {#if !collapsed}
+                            <span class="truncate">{item.label}</span>
+                        {/if}
+                    </a>
                 {:else}
                     <Link href={item.href} class={navClass(item.active, collapsed)} title={item.label}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px] flex-none">

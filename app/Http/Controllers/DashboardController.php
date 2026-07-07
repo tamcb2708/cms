@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Filament\Resources\TenantResource;
 use App\Services\DashboardService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,7 +22,7 @@ class DashboardController extends Controller
             'growth' => $this->dashboardService->getTenantGrowth(),
             'recentTenants' => $this->dashboardService->getRecentTenants(),
             'team' => $this->dashboardService->getTeamStats(),
-            'tenantsUrl' => TenantResource::getUrl(),
+            'tenantsUrl' => route('tenants.index'),
         ]);
     }
 }

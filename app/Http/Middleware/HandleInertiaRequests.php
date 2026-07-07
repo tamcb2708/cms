@@ -76,7 +76,7 @@ class HandleInertiaRequests extends Middleware
                 ['label' => __('messages.content_management'), 'route' => 'content-management', 'href' => route('content-management'), 'icon' => 'folder'],
                 ['label' => __('messages.reports'), 'route' => 'reports', 'href' => route('reports'), 'icon' => 'bar-chart'],
                 ['label' => __('messages.email_campaigns'), 'route' => 'email-campaigns', 'href' => route('email-campaigns'), 'icon' => 'mail'],
-                ['label' => __('messages.workspace_subscription'), 'route' => null, 'href' => \App\Filament\Resources\TenantResource::getUrl(), 'icon' => 'credit-card'],
+                ['label' => __('messages.workspace_subscription'), 'route' => 'tenants.*', 'href' => route('tenants.index'), 'icon' => 'credit-card'],
             ],
             array_values(array_filter([
                 $isDbTrackerEnabled ? [
