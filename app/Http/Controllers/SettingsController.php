@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\SettingsService;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SettingsController extends Controller
 {
@@ -14,12 +16,12 @@ class SettingsController extends Controller
         $this->settingsService = $settingsService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $tabs = $this->settingsService->getTabsStructure();
         $structure = $this->settingsService->getConfigStructure();
         $section = $request->query('section', 'general');
-        
+
         if (!isset($structure[$section])) {
             $section = array_key_first($structure);
         }
@@ -27,7 +29,7 @@ class SettingsController extends Controller
         // Parse scope from format like "websites_1"
         $scopeParam = $request->query('scope', 'default_0');
         [$scope, $scopeId] = explode('_', $scopeParam) + ['default', 0];
-        
+
         $scopes = [
             ['value' => 'default_0', 'label' => 'Global (Mặc định)'],
             ['value' => 'websites_1', 'label' => 'Website: Việt Nam'],
@@ -37,11 +39,17 @@ class SettingsController extends Controller
         $data = $this->settingsService->getSettingsData($section, $scope, $scopeId);
         $values = $data['values'];
         $useSystem = $data['useSystem'];
-        
+
         $tree = $this->settingsService->getTreeStructure();
         $activeTab = $structure[$section]['tab'] ?? 'general_tab';
 
-        return view('pages.settings.index', compact('tabs', 'tree', 'activeTab', 'structure', 'section', 'scopeParam', 'scope', 'scopeId', 'scopes', 'values', 'useSystem'));
+        $props = compact('tabs', 'tree', 'activeTab', 'structure', 'section', 'scopeParam', 'scope', 'scopeId', 'scopes', 'values', 'useSystem');
+
+        if ($section === 'permissions') {
+            $props = array_merge($props, app(RolePermissionController::class)->permissionsData());
+        }
+
+        return Inertia::render('Settings/Index', $props);
     }
 
     public function save(Request $request)

@@ -9,66 +9,71 @@ use App\Models\CmsRolePermission;
 
 class RolePermissionController extends Controller
 {
-    public function index()
+    /**
+     * Build the roles/permissions matrix data consumed by the Settings
+     * page (Inertia prop) when the "permissions" section is active.
+     */
+    public function permissionsData(): array
     {
-        // Fetch all roles
-        $roles = CmsRole::with('permissions')->get();
-
-        // Fetch category tree (Modules & Resources) up to 3 levels
-        $categoriesTree = CmsCategory::whereNull('parent_id')
-            ->with(['children' => function($q) {
-                $q->orderBy('sort_order')->with(['children' => function($q2) {
-                    $q2->orderBy('sort_order');
-                }]);
-            }])
-            ->orderBy('sort_order')
-            ->get();
-
-        // Flatten the tree for the matrix and compute level dynamically
-        $categories = collect();
-        $flattenTree = function($items, $level = 1) use (&$flattenTree, &$categories) {
-            foreach ($items as $item) {
-                $item->computed_level = $level;
-                $categories->push($item);
-                if ($item->children && $item->children->isNotEmpty()) {
-                    $flattenTree($item->children, $level + 1);
-                }
-            }
-        };
-        $flattenTree($categoriesTree);
-
-        // Pre-defined possible actions for any category (in a real app, this could be stored in cms_category_settings)
-        $globalActions = ['view', 'create', 'edit', 'delete', 'publish'];
-
-        // Build a structured array for the Matrix View
-        // $matrix[category_id][role_id][action] = true/false
-        $permissionsMap = [];
-        foreach ($roles as $role) {
-            foreach ($role->permissions as $perm) {
-                $permissionsMap[$perm->category_id][$role->id][$perm->action] = $perm->is_allowed;
-            }
-        }
-
         $hasTables = \Illuminate\Support\Facades\Schema::hasTable('cms_roles') && \Illuminate\Support\Facades\Schema::hasTable('cms_categories');
 
+        $globalActions = ['view', 'create', 'edit', 'delete', 'publish'];
+        $categories = collect();
         $rolesData = [];
-        foreach ($roles as $role) {
-            $perms = [];
-            foreach ($role->permissions as $perm) {
-                if ($perm->is_allowed) {
-                    $perms[$perm->category_id][$perm->action] = true;
+
+        if ($hasTables) {
+            $roles = CmsRole::with('permissions')->get();
+
+            // Fetch category tree (Modules & Resources) up to 3 levels
+            $categoriesTree = CmsCategory::whereNull('parent_id')
+                ->with(['children' => function ($q) {
+                    $q->orderBy('sort_order')->with(['children' => function ($q2) {
+                        $q2->orderBy('sort_order');
+                    }]);
+                }])
+                ->orderBy('sort_order')
+                ->get();
+
+            // Flatten the tree for the matrix and compute level dynamically
+            $flattenTree = function ($items, $level = 1) use (&$flattenTree, &$categories) {
+                foreach ($items as $item) {
+                    $item->computed_level = $level;
+                    $categories->push($item);
+                    if ($item->children && $item->children->isNotEmpty()) {
+                        $flattenTree($item->children, $level + 1);
+                    }
                 }
+            };
+            $flattenTree($categoriesTree);
+
+            foreach ($roles as $role) {
+                $perms = [];
+                foreach ($role->permissions as $perm) {
+                    if ($perm->is_allowed) {
+                        $perms[$perm->category_id][$perm->action] = true;
+                    }
+                }
+                $rolesData[] = [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'description' => $role->description,
+                    'is_system' => $role->is_system,
+                    'perms' => (object) $perms,
+                ];
             }
-            $rolesData[] = [
-                'id' => $role->id,
-                'name' => $role->name,
-                'description' => $role->description,
-                'is_system' => $role->is_system,
-                'perms' => (object)$perms
-            ];
         }
 
-        return view('pages.roles-permissions.index', compact('roles', 'categories', 'globalActions', 'permissionsMap', 'rolesData', 'hasTables'));
+        return [
+            'rolesData' => $rolesData,
+            'categories' => $categories->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'computed_level' => $c->computed_level,
+            ])->values()->all(),
+            'globalActions' => $globalActions,
+            'hasTables' => $hasTables,
+        ];
     }
 
     public function store(Request $request)

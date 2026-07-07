@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\CoreConfig;
 use App\Services\DbTrackerService;
 use Exception;
+use Inertia\Inertia;
+use Inertia\Response;
 use PDOException;
 
 class DbTrackerController extends Controller
@@ -52,21 +54,21 @@ class DbTrackerController extends Controller
     }
 
     // 1. Schema Information
-    public function schema(Request $request)
+    public function schema(Request $request): Response
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.db-tracker.missing-config');
+            return Inertia::render('DbTracker/MissingConfig');
         }
 
         try {
             $tables = $service->getTables();
         } catch (PDOException $e) {
-            return view('pages.db-tracker.missing-config')->withErrors(['error' => 'Connection failed: ' . $e->getMessage()]);
+            return Inertia::render('DbTracker/MissingConfig', ['error' => 'Connection failed: '.$e->getMessage()]);
         }
 
         $creds = $this->getCreds();
-        return view('pages.db-tracker.schema', compact('creds', 'tables'));
+        return Inertia::render('DbTracker/Schema', compact('creds', 'tables'));
     }
 
     public function schemaTableDetails(Request $request, $tableName)
@@ -99,11 +101,11 @@ class DbTrackerController extends Controller
     }
 
     // 2. Data & Activity (The existing Dashboard)
-    public function data(Request $request)
+    public function data(Request $request): Response
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.db-tracker.missing-config');
+            return Inertia::render('DbTracker/MissingConfig');
         }
 
         try {
@@ -113,30 +115,29 @@ class DbTrackerController extends Controller
                 $tables = $service->getTrackedTables();
             }
         } catch (PDOException $e) {
-            return view('pages.db-tracker.missing-config')->withErrors(['error' => 'Connection failed: ' . $e->getMessage()]);
+            return Inertia::render('DbTracker/MissingConfig', ['error' => 'Connection failed: '.$e->getMessage()]);
         }
 
         $creds = $this->getCreds();
-        $tab = 1; // Keeping $tab variable for backward compatibility in blade if needed
-        return view('pages.db-tracker.dashboard', compact('tab', 'creds', 'isInitialized', 'tables'));
+        return Inertia::render('DbTracker/Dashboard', compact('creds', 'isInitialized', 'tables'));
     }
 
     // 3. Performance & Statistics
-    public function performance(Request $request)
+    public function performance(Request $request): Response
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.db-tracker.missing-config');
+            return Inertia::render('DbTracker/MissingConfig');
         }
-        
+
         try {
             $activities = $service->getActiveConnections();
         } catch (PDOException $e) {
-            return view('pages.db-tracker.missing-config')->withErrors(['error' => 'Connection failed: ' . $e->getMessage()]);
+            return Inertia::render('DbTracker/MissingConfig', ['error' => 'Connection failed: '.$e->getMessage()]);
         }
-        
+
         $creds = $this->getCreds();
-        return view('pages.db-tracker.performance', compact('creds', 'activities'));
+        return Inertia::render('DbTracker/Performance', compact('creds', 'activities'));
     }
 
     public function performanceStats(Request $request)
@@ -153,36 +154,36 @@ class DbTrackerController extends Controller
     }
 
     // 4. Security & Users
-    public function security(Request $request)
+    public function security(Request $request): Response
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.db-tracker.missing-config');
+            return Inertia::render('DbTracker/MissingConfig');
         }
-        
+
         try {
             $stats = $service->getSecurityStats();
             $users = $stats['users'];
             $roles = $stats['roles'];
             $privileges = $stats['privileges'];
         } catch (PDOException $e) {
-            return view('pages.db-tracker.missing-config')->withErrors(['error' => 'Connection failed: ' . $e->getMessage()]);
+            return Inertia::render('DbTracker/MissingConfig', ['error' => 'Connection failed: '.$e->getMessage()]);
         }
-        
+
         $creds = $this->getCreds();
-        return view('pages.db-tracker.security', compact('creds', 'users', 'roles', 'privileges'));
+        return Inertia::render('DbTracker/Security', compact('creds', 'users', 'roles', 'privileges'));
     }
 
     // 5. Backups Management
-    public function backups(Request $request)
+    public function backups(Request $request): Response
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.db-tracker.missing-config');
+            return Inertia::render('DbTracker/MissingConfig');
         }
-        
+
         $creds = $this->getCreds();
-        
+
         // Mock data for AWS RDS Snapshots & S3 Backups
         $snapshots = [
             ['id' => 'rds-snap-17202350', 'type' => 'Automated', 'size' => '2.4 GB', 'created_at' => now()->subHours(2)->format('Y-m-d H:i:s'), 'status' => 'Available'],
@@ -190,7 +191,7 @@ class DbTrackerController extends Controller
             ['id' => 'manual-pre-update-v2', 'type' => 'Manual', 'size' => '2.3 GB', 'created_at' => now()->subDays(3)->format('Y-m-d H:i:s'), 'status' => 'Available'],
         ];
 
-        return view('pages.db-tracker.backups', compact('creds', 'snapshots'));
+        return Inertia::render('DbTracker/Backups', compact('creds', 'snapshots'));
     }
 
     // Generic action handler for DB Tracker Dashboard
@@ -223,14 +224,14 @@ class DbTrackerController extends Controller
     {
         $service = $this->getService();
         if (!$service) {
-            return view('pages.partials.db-tracker-logs', ['status' => 'not_connected', 'logs' => []]);
+            return response()->json(['status' => 'not_connected', 'logs' => []]);
         }
-        
+
         try {
             $logs = $service->getLogs(50);
-            return view('pages.partials.db-tracker-logs', ['status' => 'success', 'logs' => $logs]);
+            return response()->json(['status' => 'success', 'logs' => $logs]);
         } catch (Exception $e) {
-            return view('pages.partials.db-tracker-logs', ['status' => 'not_initialized', 'logs' => []]);
+            return response()->json(['status' => 'not_initialized', 'logs' => []]);
         }
     }
 }

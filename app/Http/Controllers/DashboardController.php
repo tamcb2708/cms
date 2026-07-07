@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\Resources\TenantResource;
 use App\Services\DashboardService;
-use Illuminate\Contracts\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
@@ -14,13 +16,14 @@ class DashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    public function index(): View
+    public function index(): Response
     {
-        $tenantStats = $this->dashboardService->getTenantStats();
-        $growth = $this->dashboardService->getTenantGrowth();
-        $recentTenants = $this->dashboardService->getRecentTenants();
-        $team = $this->dashboardService->getTeamStats();
-
-        return view('dashboard.index', compact('tenantStats', 'growth', 'recentTenants', 'team'));
+        return Inertia::render('Dashboard/Index', [
+            'tenantStats' => $this->dashboardService->getTenantStats(),
+            'growth' => $this->dashboardService->getTenantGrowth(),
+            'recentTenants' => $this->dashboardService->getRecentTenants(),
+            'team' => $this->dashboardService->getTeamStats(),
+            'tenantsUrl' => TenantResource::getUrl(),
+        ]);
     }
 }

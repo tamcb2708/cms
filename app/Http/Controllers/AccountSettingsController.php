@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Services\AccountSettingsService;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AccountSettingsController extends Controller
 {
@@ -16,11 +18,27 @@ class AccountSettingsController extends Controller
         $this->accountSettingsService = $accountSettingsService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('cmsRole');
         $tab = $request->query('tab', 'profile');
-        return view('pages.account-settings.index', compact('user', 'tab'));
+
+        return Inertia::render('Account/Index', [
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'phone' => $user->phone,
+                'department' => $user->department,
+                'job_title' => $user->job_title,
+                'locale' => $user->locale,
+                'valid_from' => $user->valid_from,
+                'valid_until' => $user->valid_until,
+                'cms_role' => $user->cmsRole ? ['name' => $user->cmsRole->name, 'is_system' => $user->cmsRole->is_system] : null,
+                'is_root_admin' => $user->email === 'admin@eios.vn',
+            ],
+            'tab' => $tab,
+        ]);
     }
 
     public function updateProfile(Request $request)

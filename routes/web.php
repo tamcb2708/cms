@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Filament handles the root route (/) and Tenant CRUD (/tenants); this custom
 // MVC dashboard is a separate page that admins land on after login.
@@ -24,21 +25,21 @@ Route::middleware('auth')->group(function () {
 
     // Placeholder pages for sidebar sections that don't have a dedicated
     // feature built yet.
-    Route::get('/content-management', fn () => view('pages.placeholder', ['title' => 'Content Management']))->name('content-management');
-    Route::get('/reports', fn () => view('pages.placeholder', ['title' => 'Reports']))->name('reports');
-    Route::get('/email-campaigns', fn () => view('pages.placeholder', ['title' => 'Email Campaigns']))->name('email-campaigns');
+    Route::get('/content-management', fn () => Inertia::render('Placeholder', ['title' => 'Content Management']))->name('content-management');
+    Route::get('/reports', fn () => Inertia::render('Placeholder', ['title' => 'Reports']))->name('reports');
+    Route::get('/email-campaigns', fn () => Inertia::render('Placeholder', ['title' => 'Email Campaigns']))->name('email-campaigns');
     Route::get('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'index'])->name('admin-directory.index');
     Route::get('/admin-directory/create', [\App\Http\Controllers\AdminDirectoryController::class, 'create'])->name('admin-directory.create');
     Route::post('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'store'])->name('admin-directory.store');
     // Software routes (placeholder until feature is built)
-    Route::get('/software', fn () => view('pages.placeholder', ['title' => 'Software']))->name('software.index');
-    Route::get('/software/create', fn () => view('pages.placeholder', ['title' => 'Add Software']))->name('software.create');
+    Route::get('/software', fn () => Inertia::render('Placeholder', ['title' => 'Software']))->name('software.index');
+    Route::get('/software/create', fn () => Inertia::render('Placeholder', ['title' => 'Add Software']))->name('software.create');
 
     // System Roles API for popup
     Route::post('/roles', [\App\Http\Controllers\RolePermissionController::class, 'store'])->name('roles.store');
     Route::delete('/roles/{id}', [\App\Http\Controllers\RolePermissionController::class, 'destroy'])->name('roles.destroy');
     Route::post('/roles/permissions', [\App\Http\Controllers\RolePermissionController::class, 'updatePermissions'])->name('roles.permissions.update');
-    Route::get('/security', fn () => view('pages.placeholder', ['title' => 'Security']))->name('security');
+    Route::get('/security', fn () => Inertia::render('Placeholder', ['title' => 'Security']))->name('security');
     Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'save'])->name('settings.save');
     Route::get('/account', [\App\Http\Controllers\AccountSettingsController::class, 'index'])->name('account.settings');

@@ -3,23 +3,30 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminDirectoryController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
-        return view('pages.placeholder', ['title' => __('messages.admin_list')]);
+        return Inertia::render('Placeholder', ['title' => __('messages.admin_list')]);
     }
 
-    public function create()
+    public function create(): Response
     {
         $hasTables = \Illuminate\Support\Facades\Schema::hasTable('cms_roles');
         $roles = [];
         if ($hasTables) {
-            $roles = \App\Models\CmsRole::all();
+            $roles = \App\Models\CmsRole::all()->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'description' => $role->description,
+                'is_system' => $role->is_system,
+            ]);
         }
 
-        return view('pages.admin-directory.create', compact('roles'));
+        return Inertia::render('AdminDirectory/Create', compact('roles'));
     }
 
     public function store(Request $request)
