@@ -11,12 +11,14 @@
         active: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
         pending: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
         expired: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+        disabled: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
     };
 
     const badgeLabels = {
         active: 'Hoạt động',
         pending: 'Chưa hiệu lực',
         expired: 'Hết hạn',
+        disabled: 'Đã vô hiệu hoá',
     };
 
     function badgeClass(status) {
@@ -31,6 +33,13 @@
     function destroy(admin) {
         if (confirm(`Xoá quản trị viên "${admin.name}"?`)) {
             router.delete(route('admin-directory.destroy', admin.id));
+        }
+    }
+
+    function toggleActive(admin) {
+        const action = admin.is_active ? 'vô hiệu hoá' : 'kích hoạt lại';
+        if (confirm(`Xác nhận ${action} tài khoản "${admin.name}"?`)) {
+            router.patch(route('admin-directory.toggle-active', admin.id));
         }
     }
 </script>
@@ -82,7 +91,12 @@
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-3">
                                     <Link href={route('admin-directory.edit', admin.id)} class="text-accent-600 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300">Sửa</Link>
-                                    <button onclick={() => destroy(admin)} class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Xoá</button>
+                                    {#if !admin.is_self}
+                                        <button onclick={() => toggleActive(admin)} class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                                            {admin.is_active ? 'Vô hiệu hoá' : 'Kích hoạt'}
+                                        </button>
+                                        <button onclick={() => destroy(admin)} class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Xoá</button>
+                                    {/if}
                                 </div>
                             </td>
                         </tr>

@@ -31,6 +31,8 @@ class AdminDirectoryController extends Controller
                 'role' => $user->cmsRole?->name,
                 'valid_from' => $user->valid_from,
                 'valid_until' => $user->valid_until,
+                'is_active' => $user->is_active,
+                'is_self' => $user->id === auth()->id(),
                 'status' => $this->statusFor($user),
             ]);
 
@@ -42,6 +44,10 @@ class AdminDirectoryController extends Controller
 
     private function statusFor(User $user): string
     {
+        if (! $user->is_active) {
+            return 'disabled';
+        }
+
         $now = now();
 
         if ($user->valid_from && $now->lt($user->valid_from)) {
@@ -64,7 +70,6 @@ class AdminDirectoryController extends Controller
 
     public function store(Request $request)
     {
-        // Validation logic here
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
@@ -75,7 +80,7 @@ class AdminDirectoryController extends Controller
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
         ]);
 
-        $user = \App\Models\User::create([
+        \App\Models\User::create([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
@@ -83,6 +88,9 @@ class AdminDirectoryController extends Controller
             'cms_role_id' => $request->role,
             'valid_from' => $request->valid_from,
             'valid_until' => $request->valid_until,
+            'is_active' => true,
+            // New admins must set their own password on first login.
+            'require_password_change' => true,
         ]);
 
         return redirect()->route('admin-directory.index')->with('success', __('messages.admin_created_success') ?? 'Admin user created successfully.');
@@ -99,6 +107,7 @@ class AdminDirectoryController extends Controller
                 'role' => $user->cms_role_id,
                 'valid_from' => $user->valid_from,
                 'valid_until' => $user->valid_until,
+                'is_active' => $user->is_active,
             ],
             'roles' => $this->roles(),
         ]);
@@ -114,6 +123,7 @@ class AdminDirectoryController extends Controller
             'role' => 'required|string|exists:cms_roles,id',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $user->fill([
@@ -125,8 +135,14 @@ class AdminDirectoryController extends Controller
             'valid_until' => $request->valid_until,
         ]);
 
+        if ($user->id !== auth()->id()) {
+            $user->is_active = $request->boolean('is_active', $user->is_active);
+        }
+
         if ($request->filled('password')) {
             $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+            // Admin reset the password on the user's behalf — force them to change it.
+            $user->require_password_change = true;
         }
 
         $user->save();
@@ -157,5 +173,18 @@ class AdminDirectoryController extends Controller
         $user->delete();
 
         return redirect()->route('admin-directory.index')->with('success', 'Đã xoá quản trị viên.');
+    }
+
+    public function toggleActive(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin-directory.index')->with('error', 'Không thể vô hiệu hoá tài khoản của chính bạn.');
+        }
+
+        $user->update(['is_active' => ! $user->is_active]);
+
+        $message = $user->is_active ? 'Đã kích hoạt lại tài khoản.' : 'Đã vô hiệu hoá tài khoản.';
+
+        return redirect()->route('admin-directory.index')->with('success', $message);
     }
 }

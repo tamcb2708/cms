@@ -16,12 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\CheckAccountValidity::class,
+            \App\Http\Middleware\EnsureAdminPasswordIsFresh::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'cms.permission' => \App\Http\Middleware\EnsureCmsPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

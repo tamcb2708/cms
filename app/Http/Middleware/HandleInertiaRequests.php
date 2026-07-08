@@ -69,18 +69,19 @@ class HandleInertiaRequests extends Middleware
     private function buildNav(Request $request): array
     {
         $isDbTrackerEnabled = CoreConfig::getValue('database/tracker/enable', 'default', 0) == '1';
+        $user = $request->user();
 
         $groups = [
             [
-                ['label' => __('messages.dashboard'), 'route' => 'dashboard', 'href' => route('dashboard'), 'icon' => 'grid'],
-                ['label' => __('messages.content_management'), 'route' => 'content-management', 'href' => route('content-management'), 'icon' => 'folder'],
-                ['label' => __('messages.reports'), 'route' => 'reports', 'href' => route('reports'), 'icon' => 'bar-chart'],
+                ['label' => __('messages.dashboard'), 'route' => 'dashboard', 'href' => route('dashboard'), 'icon' => 'grid', 'module' => 'dashboard'],
+                ['label' => __('messages.content_management'), 'route' => 'content-management', 'href' => route('content-management'), 'icon' => 'folder', 'module' => 'content'],
+                ['label' => __('messages.reports'), 'route' => 'reports', 'href' => route('reports'), 'icon' => 'bar-chart', 'module' => 'reports'],
                 ['label' => __('messages.email_campaigns'), 'route' => 'email-campaigns', 'href' => route('email-campaigns'), 'icon' => 'mail'],
                 ['label' => __('messages.workspace_subscription'), 'route' => 'tenants.*', 'href' => route('tenants.index'), 'icon' => 'credit-card'],
             ],
             array_values(array_filter([
                 $isDbTrackerEnabled ? [
-                    'label' => __('messages.db_tracker'), 'route' => 'db-tracker.*', 'href' => '#', 'icon' => 'database',
+                    'label' => __('messages.db_tracker'), 'route' => 'db-tracker.*', 'href' => '#', 'icon' => 'database', 'module' => 'db-tracker',
                     'children' => [
                         ['label' => __('messages.schema_info'), 'route' => 'db-tracker.schema', 'href' => route('db-tracker.schema')],
                         ['label' => __('messages.data_activity'), 'route' => 'db-tracker.data', 'href' => route('db-tracker.data')],
@@ -97,16 +98,24 @@ class HandleInertiaRequests extends Middleware
                     ],
                 ],
                 [
-                    'label' => __('messages.admin_directory'), 'route' => 'admin-directory.*', 'href' => '#', 'icon' => 'users',
+                    'label' => __('messages.admin_directory'), 'route' => 'admin-directory.*', 'href' => '#', 'icon' => 'users', 'module' => 'admin-directory',
                     'children' => [
                         ['label' => __('messages.admin_list'), 'route' => 'admin-directory.index', 'href' => route('admin-directory.index')],
                         ['label' => __('messages.admin_add'), 'route' => 'admin-directory.create', 'href' => route('admin-directory.create')],
                     ],
                 ],
                 ['label' => __('messages.security'), 'route' => 'security', 'href' => route('security'), 'icon' => 'shield'],
-                ['label' => __('messages.settings'), 'route' => 'settings', 'href' => route('settings'), 'icon' => 'gear'],
+                ['label' => __('messages.settings'), 'route' => 'settings', 'href' => route('settings'), 'icon' => 'gear', 'module' => 'settings'],
             ])),
         ];
+
+        // Only show modules the current admin has "view" permission for.
+        // Items with no 'module' key are shown to every authenticated admin.
+        foreach ($groups as &$items) {
+            $items = array_values(array_filter($items, function ($item) use ($user) {
+                return ! isset($item['module']) || $user->hasModulePermission($item['module'], 'view');
+            }));
+        }
 
         foreach ($groups as &$items) {
             foreach ($items as &$item) {

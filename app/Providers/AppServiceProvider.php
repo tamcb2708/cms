@@ -27,5 +27,18 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function (\Illuminate\Auth\Events\Login $event) {
             \App\Jobs\WarmUpSystemCache::dispatch($event->user);
         });
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Attempting::class,
+            \App\Listeners\Auth\BlockLockedOrInactiveLogins::class,
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Failed::class,
+            \App\Listeners\Auth\RecordFailedLogin::class,
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \App\Listeners\Auth\RecordSuccessfulLogin::class,
+        );
     }
 }

@@ -28,12 +28,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/content-management', fn () => Inertia::render('Placeholder', ['title' => 'Content Management']))->name('content-management');
     Route::get('/reports', fn () => Inertia::render('Placeholder', ['title' => 'Reports']))->name('reports');
     Route::get('/email-campaigns', fn () => Inertia::render('Placeholder', ['title' => 'Email Campaigns']))->name('email-campaigns');
-    Route::get('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'index'])->name('admin-directory.index');
-    Route::get('/admin-directory/create', [\App\Http\Controllers\AdminDirectoryController::class, 'create'])->name('admin-directory.create');
-    Route::post('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'store'])->name('admin-directory.store');
-    Route::get('/admin-directory/{user}/edit', [\App\Http\Controllers\AdminDirectoryController::class, 'edit'])->name('admin-directory.edit');
-    Route::put('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'update'])->name('admin-directory.update');
-    Route::delete('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'destroy'])->name('admin-directory.destroy');
+    Route::middleware('cms.permission:admin-directory,view')->group(function () {
+        Route::get('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'index'])->name('admin-directory.index');
+        Route::get('/admin-directory/{user}/edit', [\App\Http\Controllers\AdminDirectoryController::class, 'edit'])->name('admin-directory.edit');
+    });
+    Route::middleware('cms.permission:admin-directory,create')->group(function () {
+        Route::get('/admin-directory/create', [\App\Http\Controllers\AdminDirectoryController::class, 'create'])->name('admin-directory.create');
+        Route::post('/admin-directory', [\App\Http\Controllers\AdminDirectoryController::class, 'store'])->name('admin-directory.store');
+    });
+    Route::middleware('cms.permission:admin-directory,edit')->group(function () {
+        Route::put('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'update'])->name('admin-directory.update');
+        Route::patch('/admin-directory/{user}/toggle-active', [\App\Http\Controllers\AdminDirectoryController::class, 'toggleActive'])->name('admin-directory.toggle-active');
+    });
+    Route::delete('/admin-directory/{user}', [\App\Http\Controllers\AdminDirectoryController::class, 'destroy'])->name('admin-directory.destroy')->middleware('cms.permission:admin-directory,delete');
     // Tenants (Workspace Subscription)
     Route::get('/tenants', [\App\Http\Controllers\TenantController::class, 'index'])->name('tenants.index');
     Route::get('/tenants/create', [\App\Http\Controllers\TenantController::class, 'create'])->name('tenants.create');
@@ -47,12 +54,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/software/create', fn () => Inertia::render('Placeholder', ['title' => 'Add Software']))->name('software.create');
 
     // System Roles API for popup
-    Route::post('/roles', [\App\Http\Controllers\RolePermissionController::class, 'store'])->name('roles.store');
-    Route::delete('/roles/{id}', [\App\Http\Controllers\RolePermissionController::class, 'destroy'])->name('roles.destroy');
-    Route::post('/roles/permissions', [\App\Http\Controllers\RolePermissionController::class, 'updatePermissions'])->name('roles.permissions.update');
+    Route::middleware('cms.permission:settings,edit')->group(function () {
+        Route::post('/roles', [\App\Http\Controllers\RolePermissionController::class, 'store'])->name('roles.store');
+        Route::delete('/roles/{id}', [\App\Http\Controllers\RolePermissionController::class, 'destroy'])->name('roles.destroy');
+        Route::post('/roles/permissions', [\App\Http\Controllers\RolePermissionController::class, 'updatePermissions'])->name('roles.permissions.update');
+        Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'save'])->name('settings.save');
+    });
     Route::get('/security', fn () => Inertia::render('Placeholder', ['title' => 'Security']))->name('security');
-    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
-    Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'save'])->name('settings.save');
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings')->middleware('cms.permission:settings,view');
     Route::get('/account', [\App\Http\Controllers\AccountSettingsController::class, 'index'])->name('account.settings');
     Route::post('/account/profile', [\App\Http\Controllers\AccountSettingsController::class, 'updateProfile'])->name('account.profile');
     Route::post('/account/password', [\App\Http\Controllers\AccountSettingsController::class, 'updatePassword'])->name('account.password');

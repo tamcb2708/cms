@@ -16,6 +16,7 @@ class AccountSettingsService
     {
         return $user->update([
             'password' => Hash::make($newPassword),
+            'require_password_change' => false,
         ]);
     }
 

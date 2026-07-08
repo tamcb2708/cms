@@ -16,7 +16,8 @@ class CmsPermissionsSeeder extends Seeder
         $content = CmsCategory::firstOrCreate(['slug' => 'content'], ['name' => 'Content Management', 'type' => 'module', 'sort_order' => 2]);
         $reports = CmsCategory::firstOrCreate(['slug' => 'reports'], ['name' => 'Reports', 'type' => 'module', 'sort_order' => 3]);
         $settings = CmsCategory::firstOrCreate(['slug' => 'settings'], ['name' => 'System Settings', 'type' => 'module', 'sort_order' => 4]);
-        
+        CmsCategory::firstOrCreate(['slug' => 'admin-directory'], ['name' => 'Admin Directory', 'type' => 'module', 'sort_order' => 6]);
+
         $dbTracker = CmsCategory::firstOrCreate(['slug' => 'db-tracker'], ['name' => 'Database Tracker', 'type' => 'module', 'sort_order' => 5]);
         CmsCategory::firstOrCreate(['slug' => 'db-tracker-schema', 'parent_id' => $dbTracker->id], ['name' => 'Schema Details', 'type' => 'resource', 'sort_order' => 1]);
         CmsCategory::firstOrCreate(['slug' => 'db-tracker-logs', 'parent_id' => $dbTracker->id], ['name' => 'Query Logs', 'type' => 'resource', 'sort_order' => 2]);

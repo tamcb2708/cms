@@ -79,7 +79,7 @@ class AccountSettingsController extends Controller
 
         $this->accountSettingsService->updatePassword($request->user(), $validated['password']);
 
-        return back()->with('success_password', __('messages.success_password', 'Mật khẩu đã được thay đổi thành công!'));
+        return back()->with('success_password', 'Mật khẩu đã được thay đổi thành công!');
     }
 
     public function updateLocale(Request $request)
