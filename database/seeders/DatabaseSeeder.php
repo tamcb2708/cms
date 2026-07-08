@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
         // Call the permissions seeder to populate the matrix and roles
         $this->call([
             CmsPermissionsSeeder::class,
+            ProductsSeeder::class,
         ]);
     }
 }
